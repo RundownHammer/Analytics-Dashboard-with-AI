@@ -238,7 +238,7 @@ export default function ChatPage() {
       const errorMessage = error instanceof Error ? error.message : 'Error processing your query.'
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: `Error: ${errorMessage}. Please verify the Vanna AI service URL is configured (VANNA_SERVICE_URL) and reachable.` 
+        content: `Error: ${errorMessage}. Vanna service not reachable. Ensure VANNA_SERVICE_URL is set and the service returns /health = ok.` 
       }])
     } finally {
       setLoading(false)

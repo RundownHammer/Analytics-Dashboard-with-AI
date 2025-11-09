@@ -13,7 +13,8 @@ export async function GET(_request: NextRequest) {
         { status: 500 }
       );
     }
-    const res = await fetch(`${vannaUrl}/health`, { method: 'GET' });
+    const base = vannaUrl.replace(/\/+$/, ''); // remove trailing slashes
+    const res = await fetch(`${base}/health`, { method: 'GET' });
     const json = await res.json().catch(() => ({ status: 'unknown' }));
     return NextResponse.json(json, { status: res.ok ? 200 : 500 });
   } catch (error) {
@@ -49,15 +50,17 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
-    const response = await fetch(`${vannaUrl}/query`, {
+
+    const base = vannaUrl.replace(/\/+$/, '');
+    const response = await fetch(`${base}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question }),
     });
 
     if (!response.ok) {
-      throw new Error(`Vanna service returned ${response.status}`);
+      const text = await response.text().catch(() => '');
+      throw new Error(`Vanna service returned ${response.status}: ${text}`);
     }
 
     const data = await response.json();
