@@ -36,3 +36,4 @@ fix-git-history.sh
 
 # Data folder
 data/
+.vercel
