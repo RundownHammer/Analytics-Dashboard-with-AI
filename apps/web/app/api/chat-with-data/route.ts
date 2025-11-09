@@ -14,10 +14,12 @@ export async function GET(_request: NextRequest) {
       );
     }
     const base = vannaUrl.replace(/\/+$/, ''); // remove trailing slashes
+    console.log('[chat-with-data][GET] base URL:', base);
     const res = await fetch(`${base}/health`, { method: 'GET' });
     const json = await res.json().catch(() => ({ status: 'unknown' }));
     return NextResponse.json(json, { status: res.ok ? 200 : 500 });
   } catch (error) {
+    console.error('[chat-with-data][GET] health error:', error);
     return NextResponse.json(
       { error: 'Vanna health check failed' },
       { status: 500 }
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const base = vannaUrl.replace(/\/+$/, '');
+    console.log('[chat-with-data][POST] forwarding question to', `${base}/query`);
     const response = await fetch(`${base}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error forwarding to Vanna service:', error);
+    console.error('[chat-with-data][POST] Error forwarding to Vanna service:', error);
     return NextResponse.json(
       { error: 'Failed to process chat request' },
       { status: 500 }
