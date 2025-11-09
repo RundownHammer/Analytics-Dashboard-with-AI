@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Chat endpoint - forwards requests to Vanna AI service
+ * GET /api/chat-with-data
+ * Server-side health proxy to avoid browser CORS when waking the Vanna service.
+ */
+export async function GET(_request: NextRequest) {
+  try {
+    const vannaUrl = process.env.VANNA_SERVICE_URL || 'http://localhost:8000';
+    const res = await fetch(`${vannaUrl}/health`, { method: 'GET' });
+    const json = await res.json().catch(() => ({ status: 'unknown' }));
+    return NextResponse.json(json, { status: res.ok ? 200 : 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Vanna health check failed' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/chat-with-data
+ * Chat endpoint - forwards requests to Vanna AI service.
  * Note: The actual Vanna AI logic is in services/vanna/app.py (deployed on Render)
  */
 export async function POST(request: NextRequest) {

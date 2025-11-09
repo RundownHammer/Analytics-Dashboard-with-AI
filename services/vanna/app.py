@@ -16,9 +16,11 @@ print(f"GROQ_API_KEY loaded: {os.getenv('GROQ_API_KEY') is not None}")
 print(f"PORT: {os.getenv('PORT', '8000')}")
 
 app = FastAPI()
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
+origin_list = [o.strip() for o in allowed_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origin_list if origin_list != ["*"] else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
