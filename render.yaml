@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: analytics-vanna-ai
+    runtime: python
+    region: oregon
+    plan: free
+    branch: master
+    rootDir: services/vanna
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PORT
+        value: 8000

@@ -9,7 +9,7 @@
     "scripts"
   ],
   "scripts": {
-    "dev:api": "turbo run dev --filter=api",
+    "dev": "npm run dev:web",
     "dev:web": "turbo run dev --filter=web",
     "dev:vanna": "python services/vanna/app.py",
     "build": "turbo run build",
