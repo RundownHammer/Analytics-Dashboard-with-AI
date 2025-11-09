@@ -26,13 +26,19 @@ export function InvoicesByVendorTable() {
 
   useEffect(() => {
     fetch('/api/invoices?pageSize=50')
-      .then(res => res.json())
-      .then(result => {
-        const data = result.data || result
+      .then(async res => {
+        if (!res.ok) return []
+        try { return await res.json() } catch { return [] }
+      })
+      .then((result: any) => {
+        const data = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : [])
         setInvoices(data)
         setFilteredInvoices(data)
       })
-      .catch(console.error)
+      .catch(() => {
+        setInvoices([])
+        setFilteredInvoices([])
+      })
   }, [])
 
   // Filter invoices based on search term

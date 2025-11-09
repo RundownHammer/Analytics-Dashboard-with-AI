@@ -14,15 +14,19 @@ export function VendorSpendChart() {
 
   useEffect(() => {
     fetch('/api/vendors/top10')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) return []
+        try { return await res.json() } catch { return [] }
+      })
       .then(raw => {
+        if (!Array.isArray(raw)) { setData([]); return }
         const formatted = raw.map((r: any) => ({
           name: r.name,
           spend: Number(r.spend)
         })).slice(0, 10)
         setData(formatted)
       })
-      .catch(console.error)
+      .catch(() => setData([]))
   }, [])
 
   const maxSpend = data.length > 0 ? Math.max(...data.map((d: any) => d.spend)) : 1

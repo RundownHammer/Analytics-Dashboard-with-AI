@@ -17,8 +17,12 @@ export function InvoiceTrendChart() {
 
   useEffect(() => {
     fetch('/api/invoice-trends')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) return []
+        try { return await res.json() } catch { return [] }
+      })
       .then(raw => {
+        if (!Array.isArray(raw)) { setData([]); return }
         const formatted = raw.map((r: any) => {
           const date = new Date(r.month)
           return {
@@ -29,7 +33,7 @@ export function InvoiceTrendChart() {
         })
         setData(formatted)
       })
-      .catch(console.error)
+      .catch(() => setData([]))
   }, [])
 
   const CustomTooltip = ({ active, payload }: any) => {

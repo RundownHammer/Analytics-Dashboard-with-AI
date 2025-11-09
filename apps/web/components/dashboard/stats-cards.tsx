@@ -16,9 +16,22 @@ export function StatsCards() {
 
   useEffect(() => {
     fetch('/api/stats')
-      .then(res => res.json())
-      .then(setStats)
-      .catch(console.error)
+      .then(async (res) => {
+        if (!res.ok) return null
+        try {
+          const json = await res.json()
+          // Expecting { totalSpendYTD, totalInvoices, documentsUploaded, averageInvoiceValue }
+          if (json && (typeof json === 'object') &&
+              ('totalSpendYTD' in json || 'totalInvoices' in json)) {
+            return json as any
+          }
+          return null
+        } catch {
+          return null
+        }
+      })
+      .then((val) => setStats(val as any))
+      .catch(() => setStats(null))
   }, [])
 
   const cards = [
@@ -33,7 +46,7 @@ export function StatsCards() {
     {
       title: 'Total Invoices Processed',
       subtitle: '',
-      value: stats?.totalInvoices.toString() || '...',
+  value: String(stats?.totalInvoices ?? '...'),
       change: '+8.2%',
       changeText: 'from last month',
       trend: 'up' as const,

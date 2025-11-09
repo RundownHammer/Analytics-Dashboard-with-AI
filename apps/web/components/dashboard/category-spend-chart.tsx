@@ -11,16 +11,19 @@ export function CategorySpendChart() {
 
   useEffect(() => {
     fetch('/api/category-spend')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) return []
+        try { return await res.json() } catch { return [] }
+      })
       .then(raw => {
-        // Show all categories from the API
+        if (!Array.isArray(raw)) { setData([]); return }
         const formatted = raw.map((r: any) => ({
           name: r.category,
           value: Number(r.spend)
         }))
         setData(formatted)
       })
-      .catch(console.error)
+      .catch(() => setData([]))
   }, [])
 
   return (

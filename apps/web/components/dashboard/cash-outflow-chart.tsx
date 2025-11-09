@@ -9,21 +9,26 @@ export function CashOutflowChart() {
 
   useEffect(() => {
     fetch('/api/cash-outflow')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) return []
+        try { return await res.json() } catch { return [] }
+      })
       .then(raw => {
+        if (!Array.isArray(raw)) { setData([]); return }
         setData(raw)
       })
-      .catch(console.error)
+      .catch(() => setData([]))
   }, [])
 
   // Compute max value for chart data
-  const maxValue = Math.max(...data.map(d => Number(d.cash_outflow)), 1)
+  const safeData = Array.isArray(data) ? data : []
+  const maxValue = Math.max(...safeData.map(d => Number(d.cash_outflow || 0)), 1)
   
   // Map the buckets to match display labels (use API bucket names directly)
   const orderedBuckets = ['Overdue', '0-7 days', '8-30 days', '31-60 days', '60+ days']
   
   const chartData = orderedBuckets.map(bucket => {
-    const item = data.find(d => d.bucket === bucket)
+    const item = safeData.find(d => d.bucket === bucket)
     const value = item ? Number(item.cash_outflow) : 0
     return {
       range: bucket,
