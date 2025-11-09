@@ -3,7 +3,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Card = React.forwardRef<
+const __Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -16,9 +16,9 @@ const Card = React.forwardRef<
     {...props}
   />
 ))
-Card.displayName = "Card"
+__Card.displayName = "Card"
 
-const CardHeader = React.forwardRef<
+const __CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -28,9 +28,9 @@ const CardHeader = React.forwardRef<
     {...props}
   />
 ))
-CardHeader.displayName = "CardHeader"
+__CardHeader.displayName = "CardHeader"
 
-const CardTitle = React.forwardRef<
+const __CardTitle = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -40,9 +40,9 @@ const CardTitle = React.forwardRef<
     {...props}
   />
 ))
-CardTitle.displayName = "CardTitle"
+__CardTitle.displayName = "CardTitle"
 
-const CardDescription = React.forwardRef<
+const __CardDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -52,17 +52,17 @@ const CardDescription = React.forwardRef<
     {...props}
   />
 ))
-CardDescription.displayName = "CardDescription"
+__CardDescription.displayName = "CardDescription"
 
-const CardContent = React.forwardRef<
+const __CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ))
-CardContent.displayName = "CardContent"
+__CardContent.displayName = "CardContent"
 
-const CardFooter = React.forwardRef<
+const __CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -72,6 +72,12 @@ const CardFooter = React.forwardRef<
     {...props}
   />
 ))
-CardFooter.displayName = "CardFooter"
+__CardFooter.displayName = "CardFooter"
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+// Cast exported components to any to avoid React type mismatches across environments
+export const Card = __Card as any
+export const CardHeader = __CardHeader as any
+export const CardFooter = __CardFooter as any
+export const CardTitle = __CardTitle as any
+export const CardDescription = __CardDescription as any
+export const CardContent = __CardContent as any
