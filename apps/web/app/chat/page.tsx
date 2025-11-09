@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { TopBar } from '@/components/top-bar'
 import { Send, BarChart3, TrendingUp, PieChart } from 'lucide-react'
@@ -22,6 +22,26 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [serverWaking, setServerWaking] = useState(true)
+
+  // Ping Render service on mount to wake it up
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        const vannaUrl = process.env.NEXT_PUBLIC_VANNA_URL || 'http://localhost:8000'
+        await fetch(`${vannaUrl}/health`, { 
+          method: 'GET',
+          signal: AbortSignal.timeout(30000) // 30 second timeout
+        })
+        setServerWaking(false)
+      } catch (error) {
+        // If it fails, still set to false after timeout
+        setTimeout(() => setServerWaking(false), 3000)
+      }
+    }
+    
+    wakeUpServer()
+  }, [])
 
   // Detect if data should be visualized
   const shouldVisualize = (data: { columns: string[]; rows: any[][] }) => {
@@ -237,7 +257,23 @@ export default function ChatPage() {
             </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4 min-h-[500px] max-h-[600px] overflow-y-auto">
-              {messages.length === 0 && (
+              {/* Server Waking Up Message */}
+              {serverWaking && (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <div className="flex gap-2 mb-4">
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Waking up AI server...
+                    <br />
+                    <span className="text-xs">(First load may take 30 seconds)</span>
+                  </p>
+                </div>
+              )}
+              
+              {!serverWaking && messages.length === 0 && (
                 <div className="text-center mt-12">
                   <div className="text-muted-foreground mb-6">
                     <p className="text-lg font-semibold mb-2">Ask questions about your data</p>

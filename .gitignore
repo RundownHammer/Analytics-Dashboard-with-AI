@@ -26,3 +26,13 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Documentation (except README)
+docs/
+DEPLOYMENT_CHECKLIST.md
+QUICK_DEPLOY.md
+GIT_CLEANUP_GUIDE.md
+fix-git-history.sh
+
+# Data folder
+data/
