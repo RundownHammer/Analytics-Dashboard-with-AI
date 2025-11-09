@@ -1,9 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "VANNA_SERVICE_URL",
+    "GROQ_API_KEY"
+  ],
   "tasks": {
-    "build": {"dependsOn": ["^build"], "outputs": ["dist/**", "build/**", ".next/**"]},
-    "dev": {"cache": false},
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", "build/**", ".next/**"] },
+    "dev": { "cache": false },
     "lint": {},
-    "seed": {"cache": false}
+    "seed": { "cache": false }
   }
 }
