@@ -65,7 +65,9 @@ The backend doesn't actually do the AI stuff - it just acts as a middleman betwe
 The backend proxies the request to the Vanna AI service (running on port 8000):
 
 ```typescript
-const vannaUrl = process.env.VANNA_SERVICE_URL || 'http://localhost:8000'
+// Use the server-side proxy /api/chat-with-data to avoid browser CORS.
+// Direct calls require VANNA_SERVICE_URL to be set on the server.
+const vannaUrl = process.env.VANNA_SERVICE_URL
 
 const response = await fetch(`${vannaUrl}/query`, {
   method: 'POST',

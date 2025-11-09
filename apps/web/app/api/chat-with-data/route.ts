@@ -6,7 +6,13 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(_request: NextRequest) {
   try {
-    const vannaUrl = process.env.VANNA_SERVICE_URL || 'http://localhost:8000';
+    const vannaUrl = process.env.VANNA_SERVICE_URL;
+    if (!vannaUrl) {
+      return NextResponse.json(
+        { error: 'VANNA_SERVICE_URL env var not set' },
+        { status: 500 }
+      );
+    }
     const res = await fetch(`${vannaUrl}/health`, { method: 'GET' });
     const json = await res.json().catch(() => ({ status: 'unknown' }));
     return NextResponse.json(json, { status: res.ok ? 200 : 500 });
@@ -36,7 +42,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward request to Vanna AI service (FastAPI on Render)
-    const vannaUrl = process.env.VANNA_SERVICE_URL || 'http://localhost:8000';
+    const vannaUrl = process.env.VANNA_SERVICE_URL;
+    if (!vannaUrl) {
+      return NextResponse.json(
+        { error: 'VANNA_SERVICE_URL env var not set' },
+        { status: 500 }
+      );
+    }
     
     const response = await fetch(`${vannaUrl}/query`, {
       method: 'POST',

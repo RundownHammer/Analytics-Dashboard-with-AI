@@ -59,7 +59,7 @@ Create `.env` file in the root (copy from `.env.example`):
 ```env
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/analytics
 GROQ_API_KEY your_groq_api_key_here
-VANNA_SERVICE_URL=http://localhost:8000
+VANNA_SERVICE_URL=<your-render-service-url>
 PORT=3001
 ```
 
@@ -230,7 +230,8 @@ npx prisma generate
 **Vanna service errors:**
 ```bash
 # Check service is running
-curl http://localhost:8000/health
+# Prefer using the proxy from the Next.js app
+curl https://<your-vercel-domain>/api/chat-with-data
 ```
 
 ---

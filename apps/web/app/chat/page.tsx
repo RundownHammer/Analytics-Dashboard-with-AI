@@ -27,20 +27,19 @@ export default function ChatPage() {
 
   // Ping Render service on mount to wake it up
   useEffect(() => {
+    // Use server-side proxy to avoid direct cross-origin call & CORS
     const wakeUpServer = async () => {
       try {
-        const vannaUrl = process.env.NEXT_PUBLIC_VANNA_URL || 'http://localhost:8000'
-        await fetch(`${vannaUrl}/health`, { 
+        // Call our GET /api/chat-with-data which internally pings /health
+        await fetch('/api/chat-with-data', {
           method: 'GET',
-          signal: AbortSignal.timeout(30000) // 30 second timeout
+          signal: AbortSignal.timeout(30000)
         })
         setServerWaking(false)
       } catch (error) {
-        // If it fails, still set to false after timeout
         setTimeout(() => setServerWaking(false), 3000)
       }
     }
-    
     wakeUpServer()
   }, [])
 
@@ -239,7 +238,7 @@ export default function ChatPage() {
       const errorMessage = error instanceof Error ? error.message : 'Error processing your query.'
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: `Error: ${errorMessage}. Please make sure the Vanna AI service is running on http://localhost:8000` 
+        content: `Error: ${errorMessage}. Please verify the Vanna AI service URL is configured (VANNA_SERVICE_URL) and reachable.` 
       }])
     } finally {
       setLoading(false)
