@@ -70,8 +70,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('[chat-with-data][POST] Error forwarding to Vanna service:', error);
+    const vannaUrl = process.env.VANNA_SERVICE_URL || '';
     return NextResponse.json(
-      { error: 'Failed to process chat request' },
+      { 
+        error: 'Failed to process chat request',
+        diagnostic: {
+          vannaUrlPresent: Boolean(vannaUrl),
+          vannaUrlLength: vannaUrl.length,
+          message: (error as Error)?.message || 'unknown'
+        }
+      },
       { status: 500 }
     );
   }

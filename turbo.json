@@ -3,7 +3,8 @@
   "globalEnv": [
     "DATABASE_URL",
     "VANNA_SERVICE_URL",
-    "GROQ_API_KEY"
+    "GROQ_API_KEY",
+    "NEXT_PUBLIC_VANNA_URL"
   ],
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**", "build/**", ".next/**"] },
