@@ -10,13 +10,19 @@ from dotenv import load_dotenv
 # Load environment variables from .env file at startup
 load_dotenv()
 
+def _env(name: str, default: str = "") -> str:
+    """Read an env var and strip whitespace/newlines to avoid subtle failures.
+    Render/hosted dashboards sometimes inject a trailing newline when pasting.
+    """
+    return os.getenv(name, default).strip()
+
 # Debug: Print loaded environment variables
-print(f"DATABASE_URL loaded: {os.getenv('DATABASE_URL') is not None}")
-print(f"GROQ_API_KEY loaded: {os.getenv('GROQ_API_KEY') is not None}")
-print(f"PORT: {os.getenv('PORT', '8000')}")
+print(f"DATABASE_URL loaded: {_env('DATABASE_URL') != ''}")
+print(f"GROQ_API_KEY loaded: {_env('GROQ_API_KEY') != ''}")
+print(f"PORT: {_env('PORT', '8000')}")
 
 app = FastAPI()
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
+allowed_origins = _env("ALLOWED_ORIGINS", "*")
 origin_list = [o.strip() for o in allowed_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -93,7 +99,7 @@ def _heuristic_sql(question: str) -> str:
 
 
 def generate_sql(question: str, db_url: str) -> str:
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = _env("GROQ_API_KEY")
     # If no key, fall back immediately
     if not api_key:
         return _heuristic_sql(question)
@@ -143,7 +149,7 @@ def health():
 @app.post('/query')
 def query(q: Query):
     try:
-        db_url = os.getenv('DATABASE_URL')
+        db_url = _env('DATABASE_URL')
         if not db_url:
             raise HTTPException(status_code=500, detail='DATABASE_URL not set')
         
@@ -168,5 +174,5 @@ def query(q: Query):
  
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", "8000"))
+    port = int(_env("PORT", "8000"))
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
