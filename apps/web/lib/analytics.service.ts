@@ -66,14 +66,25 @@ export class AnalyticsService {
    * Get spend by category
    */
   async getCategorySpend() {
+    // Ensure we always return a consistent set of categories even if some have zero spend.
     const result = await prisma.$queryRaw`
+      WITH base AS (
+        SELECT 
+          COALESCE(v.category, 'Uncategorized') AS category,
+          SUM(i."totalAmount") AS raw_spend
+        FROM "Invoice" i
+        INNER JOIN "Vendor" v ON v.id = i."vendorId"
+        GROUP BY v.category
+      ),
+      categories AS (
+        SELECT UNNEST(ARRAY['Technology','Operations','Marketing','Facilities']) AS category
+      )
       SELECT 
-        COALESCE(v.category, 'Uncategorized') AS category,
-        SUM(i."totalAmount")::text AS spend
-      FROM "Invoice" i
-      INNER JOIN "Vendor" v ON v.id = i."vendorId"
-      GROUP BY v.category
-      ORDER BY SUM(i."totalAmount") DESC
+        c.category,
+        COALESCE(base.raw_spend, 0)::text AS spend
+      FROM categories c
+      LEFT JOIN base ON base.category = c.category
+      ORDER BY c.category ASC
     `;
 
     return serializeBigInt(result);
@@ -83,6 +94,7 @@ export class AnalyticsService {
    * Get cash outflow forecast by aging buckets
    */
   async getCashOutflow() {
+    // Breakdown unpaid portions of invoices across aging buckets; exclude fully paid invoices.
     const result = await prisma.$queryRaw`
       WITH buckets_list AS (
         SELECT UNNEST(ARRAY['Overdue', '0-7 days', '8-30 days', '31-60 days', '60+ days']) AS bucket
@@ -92,27 +104,35 @@ export class AnalyticsService {
         FROM "Payment"
         GROUP BY "invoiceId"
       ),
-      calc AS (
+      remaining AS (
         SELECT 
-          CASE 
-            WHEN i."dueDate" IS NULL THEN 'Unknown'
-            WHEN DATE(i."dueDate") < CURRENT_DATE THEN 'Overdue'
-            WHEN DATE(i."dueDate") BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN '0-7 days'
-            WHEN DATE(i."dueDate") BETWEEN CURRENT_DATE + INTERVAL '8 days' AND CURRENT_DATE + INTERVAL '30 days' THEN '8-30 days'
-            WHEN DATE(i."dueDate") BETWEEN CURRENT_DATE + INTERVAL '31 days' AND CURRENT_DATE + INTERVAL '60 days' THEN '31-60 days'
-            WHEN DATE(i."dueDate") > CURRENT_DATE + INTERVAL '60 days' THEN '60+ days'
-            ELSE 'Unknown'
-          END AS bucket,
-          (i."totalAmount" - COALESCE(p.paid, 0)) AS exposure
+          i.id,
+          i."totalAmount" - COALESCE(p.paid, 0) AS outstanding,
+          i."dueDate"
         FROM "Invoice" i
         LEFT JOIN payments p ON p."invoiceId" = i.id
-        WHERE i.status != 'PAID' AND i.status != 'CANCELLED'
+        WHERE i.status NOT IN ('PAID','CANCELLED')
+          AND (i."totalAmount" - COALESCE(p.paid, 0)) > 0
+      ),
+      classified AS (
+        SELECT 
+          CASE 
+            WHEN r."dueDate" IS NULL THEN '60+ days' -- Treat missing due date as far future to avoid lumping in overdue
+            WHEN DATE(r."dueDate") < CURRENT_DATE THEN 'Overdue'
+            WHEN DATE(r."dueDate") BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' THEN '0-7 days'
+            WHEN DATE(r."dueDate") BETWEEN CURRENT_DATE + INTERVAL '8 days' AND CURRENT_DATE + INTERVAL '30 days' THEN '8-30 days'
+            WHEN DATE(r."dueDate") BETWEEN CURRENT_DATE + INTERVAL '31 days' AND CURRENT_DATE + INTERVAL '60 days' THEN '31-60 days'
+            WHEN DATE(r."dueDate") > CURRENT_DATE + INTERVAL '60 days' THEN '60+ days'
+            ELSE '60+ days'
+          END AS bucket,
+          r.outstanding
+        FROM remaining r
       )
       SELECT 
         b.bucket,
-        COALESCE(SUM(c.exposure), 0)::text AS cash_outflow
+        COALESCE(SUM(c.outstanding), 0)::text AS cash_outflow
       FROM buckets_list b
-      LEFT JOIN calc c ON c.bucket = b.bucket
+      LEFT JOIN classified c ON c.bucket = b.bucket
       GROUP BY b.bucket
       ORDER BY array_position(ARRAY['Overdue', '0-7 days', '8-30 days', '31-60 days', '60+ days'], b.bucket)
     `;

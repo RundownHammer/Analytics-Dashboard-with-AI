@@ -2,11 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, FileText, Layers, Users, Settings, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Invoice', href: '/invoice', icon: FileText },
+  { name: 'Other files', href: '/files', icon: Layers },
+  { name: 'Departments', href: '/departments', icon: Layers },
+  { name: 'Users', href: '/users', icon: Users },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar() {
@@ -28,15 +33,19 @@ export function Sidebar() {
           {navigation.map((item) => {
             const isActive = pathname === item.href
             const Icon = item.icon
+            const isDisabled = !['/dashboard', '/chat'].includes(item.href)
             return (
               <Link
                 key={item.name}
-                href={item.href}
+                href={isDisabled ? '#' : item.href}
+                onClick={(e) => { if (isDisabled) e.preventDefault() }}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
                   isActive
                     ? 'bg-purple-50 text-purple-700'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    : cn(
+                        isDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'
+                      )
                 )}
               >
                 <Icon className="h-5 w-5" />
