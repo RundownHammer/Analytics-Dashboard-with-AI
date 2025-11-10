@@ -7,7 +7,7 @@ import psycopg
 from groq import Groq
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables from .env file at startup
 load_dotenv()
 
 # Debug: Print loaded environment variables
