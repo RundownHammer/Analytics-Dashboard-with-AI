@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10;
     
     const vendors = await analyticsService.getTopVendors(limit);
-    console.log('🔍 Top Vendors DB Response:', JSON.stringify(vendors, null, 2));
     return NextResponse.json(vendors);
   } catch (error) {
     console.error('Error fetching top vendors:', error);

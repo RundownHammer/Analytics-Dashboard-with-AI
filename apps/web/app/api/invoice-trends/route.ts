@@ -4,7 +4,6 @@ import { analyticsService } from '@/lib/analytics.service';
 export async function GET(request: NextRequest) {
   try {
     const trends = await analyticsService.getInvoiceTrends();
-    console.log('🔍 Invoice Trends DB Response:', JSON.stringify(trends, null, 2));
     return NextResponse.json(trends);
   } catch (error) {
     console.error('Error fetching invoice trends:', error);
