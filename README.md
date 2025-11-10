@@ -1,4 +1,4 @@
-# Analytics Dashboard 📊
+# Analytics Dashboard 
 
 Hey! This is an analytics dashboard I built for visualizing invoice data with an AI-powered chat feature. You can ask questions in plain English and it generates SQL queries automatically.
 
@@ -136,39 +136,21 @@ analytics/
 ## Features
 
 ### Dashboard
-- 📈 **KPI Cards** - Total spend, invoice count, pending/overdue stats
-- 📊 **Charts** - Invoice trends, top vendors, category breakdown, cash forecast
-- 📋 **Invoice Table** - Searchable, filterable list of all invoices
+-  **KPI Cards** - Total spend, invoice count, pending/overdue stats
+-  **Charts** - Invoice trends, top vendors, category breakdown, cash forecast
+-  **Invoice Table** - Searchable, filterable list of all invoices
 
 ### AI Chat
-- 💬 **Natural Language** - Ask questions in plain English
-- 🔍 **SQL Generation** - Groq AI converts questions to SQL
-- 📊 **Auto Visualization** - Generates charts based on results
-- 💡 **Smart Insights** - Calculates totals, averages automatically
+-  **Natural Language** - Ask questions in plain English
+-  **SQL Generation** - Groq AI converts questions to SQL
+-  **Auto Visualization** - Generates charts based on results
+-  **Smart Insights** - Calculates totals, averages automatically
 
 **Example Questions:**
 - "Show me all overdue invoices"
 - "Top 5 vendors by spending"
 - "Monthly invoice trends for the last 6 months"
 - "What's the average invoice amount?"
-
----
-
-## Documentation
-
-### Getting Started
-- **[QUICKSTART.md](docs/QUICKSTART.md)** - Detailed setup instructions for local development
-- **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** - Deploy to production in 30 minutes
-
-### Technical Docs
-- **[DATABASE.md](docs/DATABASE.md)** - Database schema and relationships
-- **[API.md](docs/API.md)** - All API endpoints and examples
-- **[CHAT_WORKFLOW.md](docs/CHAT_WORKFLOW.md)** - How the AI chat works
-
-### Deployment
-- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Complete deployment guide (Vercel + Render + Neon)
-- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
-- **[SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)** - Security review and best practices
 
 ---
 
@@ -236,20 +218,6 @@ curl https://<your-vercel-domain>/api/chat-with-data
 
 ---
 
-## TODO / Ideas for Improvement
-
-- [ ] Add user authentication (NextAuth.js)
-- [ ] Implement pagination for invoice table
-- [ ] Add CSV export functionality
-- [ ] Custom date range filters
-- [ ] Dark mode toggle
-- [ ] Mobile responsive improvements
-- [ ] Add unit tests
-- [ ] Set up CI/CD
-- [ ] Better error handling
-
----
-
 ## How It Works
 
 The AI chat follows this flow:
@@ -288,4 +256,4 @@ See [CHAT_WORKFLOW.md](docs/CHAT_WORKFLOW.md) for detailed explanation.
 
 ---
 
-Built by an intern trying to learn full-stack development! 🚀
+Built by an intern trying to learn full-stack development!
