@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
 const COLORS = ['#3b82f6', '#f97316', '#fbbf24', '#10b981', '#8b5cf6', '#ec4899']
@@ -28,6 +28,23 @@ export function CategorySpendChart() {
       .catch(() => setData([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0]
+      const name = item?.payload?.name
+      const value = Number(item?.value || 0)
+      return (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+          <div className="text-xs text-gray-600 mb-1">{name}</div>
+          <div className="text-sm font-bold text-blue-600">
+            € {value.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <Card className="flex flex-col h-full">
@@ -57,8 +74,7 @@ export function CategorySpendChart() {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: any) => `€${Number(v).toLocaleString()}`} />
-              <Legend verticalAlign="bottom" height={24} />
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
           )}

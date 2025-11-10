@@ -40,19 +40,15 @@ export function InvoiceTrendChart() {
     if (active && payload && payload.length) {
       const monthData = payload[0].payload
       return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[200px]">
-          <div className="text-xs text-gray-600 mb-2">{monthData.month} 2025</div>
-          <div className="space-y-1">
-            <div className="flex justify-between items-baseline gap-4">
-              <span className="text-xs text-gray-500">Invoice count:</span>
-              <span className="text-lg font-bold text-blue-600">{monthData.count}</span>
-            </div>
-            <div className="flex justify-between items-baseline gap-4">
-              <span className="text-xs text-gray-500">Total Spend:</span>
-              <span className="text-lg font-bold text-blue-600">
-                € {Number(monthData.spend).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+          <div className="text-xs text-gray-600 mb-1">{monthData.month} 2025</div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Count</span>
+            <span className="font-bold text-blue-600">{monthData.count}</span>
+          </div>
+          <div className="flex justify-between text-sm mt-1">
+            <span className="text-gray-600">Spend</span>
+            <span className="font-bold text-blue-600">€ {Number(monthData.spend).toLocaleString('de-DE', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
       )

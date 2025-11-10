@@ -40,6 +40,21 @@ export function CashOutflowChart() {
     }
   })
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0]
+      return (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+          <div className="text-xs text-gray-600 mb-1">{item.payload.range}</div>
+          <div className="text-sm font-bold text-blue-600">
+            € {Number(item.value).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-3 pt-4 px-4 flex-shrink-0">
@@ -73,7 +88,7 @@ export function CashOutflowChart() {
                 width={80}
                 axisLine={false}
               />
-              <Tooltip formatter={(v: any) => `€${Number(v).toLocaleString()}`} />
+              <Tooltip content={<CustomTooltip />} />
               {/* Single dark indigo bars - full width */}
               <Bar 
                 dataKey="amount" 

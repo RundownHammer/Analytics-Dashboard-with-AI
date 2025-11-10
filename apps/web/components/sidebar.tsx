@@ -2,16 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Layers, Users, Settings, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Invoice', href: '/invoice', icon: FileText },
-  { name: 'Other files', href: '/files', icon: Layers },
-  { name: 'Departments', href: '/departments', icon: Layers },
-  { name: 'Users', href: '/users', icon: Users },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar() {
@@ -19,17 +14,9 @@ export function Sidebar() {
 
   return (
     <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200">
-      {/* Logo */}
+      {/* Simple Brand */}
       <div className="flex h-16 items-center px-6 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-            <span className="text-white text-sm font-bold">B</span>
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-gray-900">Buchhaltung</div>
-            <div className="text-xs text-gray-500">by flowbite</div>
-          </div>
-        </div>
+        <div className="text-lg font-bold text-gray-900">Flowbit</div>
       </div>
 
       {/* Navigation */}
@@ -76,14 +63,9 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Branding */}
-      <div className="p-6 border-t border-gray-200">
-        <div className="flex items-center gap-2">
-          <svg className="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-          </svg>
-          <span className="text-lg font-bold text-gray-900">Flowbit AI</span>
-        </div>
+      {/* Footer Spacer */}
+      <div className="p-4 border-t border-gray-200 text-xs text-gray-400">
+        © {new Date().getFullYear()} Flowbit
       </div>
     </div>
   )
