@@ -1,19 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+function resolveVannaBase(): { ok: true; base: string } | { ok: false; error: string } {
+  const raw = (process.env.VANNA_SERVICE_URL || '').trim();
+  if (!raw) return { ok: false, error: 'VANNA_SERVICE_URL env var not set' };
+  try {
+    const u = new URL(raw);
+    // Block localhost/127.0.0.1 in production deployments
+    const isLocal = ['localhost', '127.0.0.1'].includes(u.hostname);
+    const inProd = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+    if (isLocal && inProd) {
+      return { ok: false, error: 'VANNA_SERVICE_URL points to localhost in production' };
+    }
+    const base = `${u.protocol}//${u.host}`.replace(/\/+$/, '');
+    return { ok: true, base };
+  } catch {
+    return { ok: false, error: 'VANNA_SERVICE_URL is not a valid absolute URL' };
+  }
+}
+
 /**
  * GET /api/chat-with-data
  * Server-side health proxy to avoid browser CORS when waking the Vanna service.
  */
 export async function GET(_request: NextRequest) {
   try {
-    const vannaUrl = process.env.VANNA_SERVICE_URL;
-    if (!vannaUrl) {
-      return NextResponse.json(
-        { error: 'VANNA_SERVICE_URL env var not set' },
-        { status: 500 }
-      );
+    const resolved = resolveVannaBase();
+    if (!resolved.ok) {
+      return NextResponse.json({ error: (resolved as any).error }, { status: 500 });
     }
-    const base = vannaUrl.replace(/\/+$/, ''); // remove trailing slashes
+    const base = (resolved as any).base; // already sanitized
     console.log('[chat-with-data][GET] base URL:', base);
     const res = await fetch(`${base}/health`, { method: 'GET' });
     const json = await res.json().catch(() => ({ status: 'unknown' }));
@@ -45,15 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward request to Vanna AI service (FastAPI on Render)
-    const vannaUrl = process.env.VANNA_SERVICE_URL;
-    if (!vannaUrl) {
-      return NextResponse.json(
-        { error: 'VANNA_SERVICE_URL env var not set' },
-        { status: 500 }
-      );
+    const resolved = resolveVannaBase();
+    if (!resolved.ok) {
+      return NextResponse.json({ error: (resolved as any).error }, { status: 500 });
     }
-
-    const base = vannaUrl.replace(/\/+$/, '');
+    const base = (resolved as any).base;
     console.log('[chat-with-data][POST] forwarding question to', `${base}/query`);
     const response = await fetch(`${base}/query`, {
       method: 'POST',
