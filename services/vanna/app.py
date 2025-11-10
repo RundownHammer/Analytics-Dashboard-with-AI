@@ -16,10 +16,29 @@ def _env(name: str, default: str = "") -> str:
     """
     return os.getenv(name, default).strip()
 
+def _sanitize_pg_env() -> None:
+    """Normalize Postgres client environment to avoid libpq errors.
+    In particular, PGCHANNELBINDING must be one of: disable|prefer|require.
+    Trailing newlines from pasted values can cause: invalid channel_binding value: "require\n".
+    """
+    val = _env("PGCHANNELBINDING")
+    if not val:
+        return
+    norm = val.lower()
+    if norm in ("disable", "prefer", "require"):
+        os.environ["PGCHANNELBINDING"] = norm
+    else:
+        # Unset invalid value so libpq uses its default
+        os.environ.pop("PGCHANNELBINDING", None)
+
 # Debug: Print loaded environment variables
 print(f"DATABASE_URL loaded: {_env('DATABASE_URL') != ''}")
 print(f"GROQ_API_KEY loaded: {_env('GROQ_API_KEY') != ''}")
 print(f"PORT: {_env('PORT', '8000')}")
+print(f"PGCHANNELBINDING: {_env('PGCHANNELBINDING') or '(unset)'}")
+
+# Ensure PG env is clean before any DB connection
+_sanitize_pg_env()
 
 app = FastAPI()
 allowed_origins = _env("ALLOWED_ORIGINS", "*")
