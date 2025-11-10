@@ -70,26 +70,39 @@ def get_schema(db_url: str) -> str:
     
     return "\n".join(schema_lines)
 
+def _heuristic_sql(question: str) -> str:
+    """Very small set of rules to cover common demo prompts if LLM is unavailable."""
+    lower = question.lower()
+    if "overdue" in lower or "need to be paid" in lower or "unpaid" in lower:
+        return (
+            'SELECT id, "invoiceNumber", "vendorId", "issueDate", "dueDate", "totalAmount", status '
+            'FROM "Invoice" WHERE status IN (\'OVERDUE\', \'PENDING\') ORDER BY "dueDate" ASC;'
+        )
+    if "top" in lower and "vendor" in lower:
+        return (
+            'SELECT v.name, SUM(i."totalAmount") AS spend FROM "Invoice" i '
+            'JOIN "Vendor" v ON v.id = i."vendorId" GROUP BY v.name ORDER BY spend DESC LIMIT 5;'
+        )
+    if ("category" in lower and ("spend" in lower or "spending" in lower)) or "spend by category" in lower:
+        return (
+            'SELECT "category", SUM("totalAmount") AS spend FROM "Invoice" '
+            'GROUP BY "category" ORDER BY spend DESC;'
+        )
+    # Default safe aggregate
+    return 'SELECT COUNT(*) AS count FROM "Invoice";'
+
+
 def generate_sql(question: str, db_url: str) -> str:
     api_key = os.getenv("GROQ_API_KEY")
+    # If no key, fall back immediately
     if not api_key:
-        # Fallback heuristic SQL for common questions
-        lower = question.lower()
-        if "overdue" in lower:
-            return (
-                'SELECT id, "invoiceNumber", "vendorId", "issueDate", "dueDate", "totalAmount", status '
-                'FROM "Invoice" WHERE status = \"OVERDUE\" ORDER BY "dueDate" ASC;'
-            )
-        if "top" in lower and "vendor" in lower:
-            return (
-                'SELECT v.name, SUM(i."totalAmount") AS spend FROM "Invoice" i '
-                'JOIN "Vendor" v ON v.id = i."vendorId" GROUP BY v.name ORDER BY spend DESC LIMIT 5;'
-            )
-        return 'SELECT COUNT(*) AS count FROM "Invoice";'
+        return _heuristic_sql(question)
 
-    client = Groq(api_key=api_key)
-    schema = get_schema(db_url)
-    prompt = f"""You are a PostgreSQL expert. Generate a SQL query based on the user's question and the schema below.
+    # Try Groq; if the client/lib/env is broken (e.g., proxies kw error), fall back gracefully
+    try:
+        client = Groq(api_key=api_key)
+        schema = get_schema(db_url)
+        prompt = f"""You are a PostgreSQL expert. Generate a SQL query based on the user's question and the schema below.
 
 CRITICAL RULES:
 1. ALL table names MUST be in double quotes: "Invoice", "Vendor", "Customer", "LineItem", "Payment"
@@ -106,18 +119,22 @@ Examples:
 - SELECT COUNT(*) FROM "Invoice" WHERE "status" = 'PAID'
 - SELECT "name", SUM("totalAmount") FROM "Vendor" v JOIN "Invoice" i ON v."id" = i."vendorId" GROUP BY "name"
 """
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=512,
-    )
-    sql = completion.choices[0].message.content.strip()
-    # Basic guardrails
-    forbidden = [";", "--", "drop ", "insert ", "update ", "delete ", "alter "]
-    if any(x in sql.lower() for x in forbidden if x != ";"):
-        raise HTTPException(status_code=400, detail="Unsafe SQL generated")
-    return sql
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=512,
+        )
+        sql = completion.choices[0].message.content.strip()
+        # Basic guardrails
+        forbidden = [";", "--", "drop ", "insert ", "update ", "delete ", "alter "]
+        if any(x in sql.lower() for x in forbidden if x != ";"):
+            raise HTTPException(status_code=400, detail="Unsafe SQL generated")
+        return sql
+    except Exception as e:
+        # Log and fall back to heuristics so the app keeps working without LLM
+        print(f"Groq client error, falling back to heuristics: {e}")
+        return _heuristic_sql(question)
 
 @app.get('/health')
 def health():
