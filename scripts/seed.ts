@@ -72,9 +72,24 @@ interface ExtractedDocument {
 
 function mapStatus(statusField: string, validatedStatus?: string): InvoiceStatus {
   const status = validatedStatus || statusField;
-  if (status === "validated") return InvoiceStatus.PAID;
-  if (status === "processed") return InvoiceStatus.PENDING;
-  return InvoiceStatus.PENDING;
+  
+  // Better distribution of statuses for demo data
+  const rand = Math.random();
+  if (status === "validated") {
+    // 70% PAID, 30% PARTIAL for validated invoices
+    return rand < 0.7 ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL;
+  }
+  
+  if (status === "processed") {
+    // Mix of PENDING and OVERDUE for processed invoices
+    return rand < 0.6 ? InvoiceStatus.PENDING : InvoiceStatus.OVERDUE;
+  }
+  
+  // Default mix
+  if (rand < 0.4) return InvoiceStatus.PENDING;
+  if (rand < 0.6) return InvoiceStatus.OVERDUE;
+  if (rand < 0.8) return InvoiceStatus.PARTIAL;
+  return InvoiceStatus.PAID;
 }
 
 function parseDate(dateStr?: string): Date {
@@ -89,11 +104,17 @@ function parseDate(dateStr?: string): Date {
 function getVendorCategory(vendorName?: string): string {
   if (!vendorName) return "Uncategorized";
   const name = vendorName.toLowerCase();
-  if (name.includes("tech") || name.includes("software")) return "Technology";
-  if (name.includes("supply") || name.includes("global")) return "Operations";
-  if (name.includes("marketing") || name.includes("media")) return "Marketing";
-  if (name.includes("consulting") || name.includes("services")) return "Facilities";
-  return "Operations";
+  
+  // More specific category mapping
+  if (name.includes("tech") || name.includes("software") || name.includes("digital") || name.includes("systems")) return "Technology";
+  if (name.includes("marketing") || name.includes("media") || name.includes("advertis")) return "Marketing";
+  if (name.includes("consulting") || name.includes("services") || name.includes("facility") || name.includes("maintenance")) return "Facilities";
+  if (name.includes("supply") || name.includes("global") || name.includes("logistics") || name.includes("material")) return "Operations";
+  
+  // Better distribution: use hash-based fallback instead of defaulting everything to Operations
+  const categories = ["Technology", "Operations", "Marketing", "Facilities"];
+  const hash = vendorName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return categories[hash % categories.length];
 }
 
 async function main() {
@@ -133,7 +154,17 @@ async function main() {
       const vendorName = llm.vendor.value?.vendorName?.value || "Unknown Vendor";
       const customerName = llm.customer?.value?.customerName?.value || null;
       const invoiceDate = llm.invoice.value?.invoiceDate?.value;
-      const dueDate = llm.payment?.value?.dueDate?.value;
+      let dueDate = llm.payment?.value?.dueDate?.value;
+      
+      // If no due date or if we want better distribution across aging buckets, generate one
+      if (!dueDate || Math.random() < 0.3) { // 30% chance to override for better distribution
+        const now = new Date();
+        const daysOffset = Math.floor(Math.random() * 180) - 90; // Random between -90 and +90 days
+        const generatedDate = new Date(now);
+        generatedDate.setDate(generatedDate.getDate() + daysOffset);
+        dueDate = generatedDate.toISOString();
+      }
+      
       const invoiceTotal = llm.summary.value?.invoiceTotal?.value || 0;
       const subTotal = llm.summary.value?.subTotal?.value || invoiceTotal;
       const totalTax = llm.summary.value?.totalTax?.value || 0;
@@ -166,12 +197,14 @@ async function main() {
       }
 
       // Create invoice
+      const invoiceStatus = mapStatus(doc.status, doc.validatedData?.status);
+      
       const invoice = await prisma.invoice.create({
         data: {
           invoiceNumber: invoiceId,
           vendorId: vendor.id,
           customerId,
-          status: mapStatus(doc.status, doc.validatedData?.status),
+          status: invoiceStatus,
           issueDate: parseDate(invoiceDate || doc.createdAt.$date),
           dueDate: dueDate ? parseDate(dueDate) : null,
           subTotal: Math.abs(subTotal),
@@ -208,8 +241,9 @@ async function main() {
         });
       }
 
-      // Create payment if invoice is validated/paid
-      if (doc.validatedData?.status === "validated" && doc.processedAt) {
+      // Create payment based on invoice status (already computed above)
+      if (invoiceStatus === InvoiceStatus.PAID && doc.processedAt) {
+        // Full payment for PAID invoices
         await prisma.payment.create({
           data: {
             invoiceId: invoice.id,
@@ -218,7 +252,19 @@ async function main() {
             paymentMethod: "Bank Transfer",
           },
         });
+      } else if (invoiceStatus === InvoiceStatus.PARTIAL) {
+        // Partial payment (30-70% of total)
+        const partialPercent = 0.3 + Math.random() * 0.4;
+        await prisma.payment.create({
+          data: {
+            invoiceId: invoice.id,
+            paidDate: parseDate(doc.processedAt?.$date || doc.createdAt.$date),
+            amount: Math.abs(invoiceTotal * partialPercent),
+            paymentMethod: "Bank Transfer",
+          },
+        });
       }
+      // No payment for PENDING and OVERDUE invoices
 
       processedCount++;
       if (processedCount % 10 === 0) {

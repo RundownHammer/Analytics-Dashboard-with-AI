@@ -66,6 +66,15 @@ export class AnalyticsService {
    * Get spend by category
    */
   async getCategorySpend() {
+    // First, let's see what categories actually exist in the database
+    const vendorCategories = await prisma.$queryRaw`
+      SELECT DISTINCT COALESCE(category, 'Uncategorized') AS category, COUNT(*) AS vendor_count
+      FROM "Vendor"
+      GROUP BY category
+      ORDER BY category
+    `;
+    console.log('📊 Vendor Categories in DB:', vendorCategories);
+
     // Ensure we always return a consistent set of categories even if some have zero spend.
     const result = await prisma.$queryRaw`
       WITH base AS (
@@ -94,6 +103,19 @@ export class AnalyticsService {
    * Get cash outflow forecast by aging buckets
    */
   async getCashOutflow() {
+    // First, let's see the invoice statuses and due date distribution
+    const invoiceStats = await prisma.$queryRaw`
+      SELECT 
+        status,
+        COUNT(*) AS count,
+        COUNT(CASE WHEN "dueDate" IS NULL THEN 1 END) AS null_due_dates,
+        COUNT(CASE WHEN "dueDate" < CURRENT_DATE THEN 1 END) AS overdue_count,
+        COUNT(CASE WHEN "dueDate" >= CURRENT_DATE THEN 1 END) AS future_count
+      FROM "Invoice"
+      GROUP BY status
+    `;
+    console.log('📊 Invoice Status Distribution:', invoiceStats);
+
     // Breakdown unpaid portions of invoices across aging buckets; exclude fully paid invoices.
     const result = await prisma.$queryRaw`
       WITH buckets_list AS (
@@ -108,7 +130,8 @@ export class AnalyticsService {
         SELECT 
           i.id,
           i."totalAmount" - COALESCE(p.paid, 0) AS outstanding,
-          i."dueDate"
+          i."dueDate",
+          i.status
         FROM "Invoice" i
         LEFT JOIN payments p ON p."invoiceId" = i.id
         WHERE i.status NOT IN ('PAID','CANCELLED')
@@ -136,6 +159,16 @@ export class AnalyticsService {
       GROUP BY b.bucket
       ORDER BY array_position(ARRAY['Overdue', '0-7 days', '8-30 days', '31-60 days', '60+ days'], b.bucket)
     `;
+
+    console.log('📊 Remaining invoices check:', await prisma.$queryRaw`
+      SELECT COUNT(*) AS unpaid_count, 
+             SUM(i."totalAmount") AS total_unpaid
+      FROM "Invoice" i
+      LEFT JOIN (SELECT "invoiceId", SUM(amount) AS paid FROM "Payment" GROUP BY "invoiceId") p 
+        ON p."invoiceId" = i.id
+      WHERE i.status NOT IN ('PAID','CANCELLED')
+        AND (i."totalAmount" - COALESCE(p.paid, 0)) > 0
+    `);
 
     return serializeBigInt(result);
   }
